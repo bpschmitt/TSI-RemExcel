@@ -1,17 +1,14 @@
 import csv
 import json
-import requests
+import logging
+import sys
+import concurrent.futures as cf
 from requests_futures.sessions import FuturesSession
-from concurrent.futures import ThreadPoolExecutor
-
-session = FuturesSession(executor=ThreadPoolExecutor(max_workers=50))
-url = "https://api.truesight.bmc.com/v1/events"
-headers = {'Content-type': 'application/json'}
-threeyears = 94608000
 
 with open('param.json') as json_data:
     parms = json.load(json_data)
 
+threeyears = 94608000
 
 def getCSVHeader():
     mappings={}
@@ -39,6 +36,7 @@ def getItem(mappings,value):
 
 def createEventJSON():
 
+    eventList=[]
     header = getCSVHeader()
     f = open(parms["file"],encoding='Windows-1252')
     reader = csv.reader(f)
@@ -50,12 +48,11 @@ def createEventJSON():
                 "source": parms["sourcesender"],
                 "sender": parms["sourcesender"],
                 "fingerprintFields": parms["fingerprintfields"],
-                "status": "Open",
+                "title": events[header["DESCRIPTION"]],
+                "status": getItem(parms["status"],events[header["STATUS"]]),
                 "createdAt": int(events[header["SUBMIT_DATE"]]) + threeyears,
+                "eventClass": "Incident",
                 "properties": {
-                    "title": events[header["DESCRIPTION"]],
-                    "eventClass": "Incident",
-                    "status": getItem(parms["status"],events[header["STATUS"]]),
                     "urgency": getItem(parms["urgency"],events[header["URGENCY"]]),
                     "impact": getItem(parms["impact"],events[header["IMPACT"]]),
                     "incident_id": events[header["INCIDENT_NUMBER"]],
@@ -71,15 +68,40 @@ def createEventJSON():
                 },
                 "tags": [parms["app_id"]]
             }
-
-            print(event)
+            event = json.dumps(event)
+            eventList.append(event)
         except:
             pass
 
-createEventJSON()
+    return eventList
 
-""" data_json = json.dumps(data)
-print(data_json)
+def sendAsyncEvents(events):
 
-myResponse = requests.post(url, data=data_json, headers=headers, auth=(parms["email"], parms["apikey"]))
-print(str(myResponse.status_code) + " - " + str(myResponse.reason)) """
+    logging.basicConfig(
+        stream=sys.stderr, level=logging.INFO,
+        format='%(relativeCreated)s %(message)s',
+    )
+
+    session = FuturesSession()
+    futures = {}
+
+    logging.info('start')
+
+    for event in events:
+        future = session.post(parms['url'],data=event,headers=parms['headers'],auth=(parms['email'],parms['apikey']))
+        futures[future] = event
+
+    for future in cf.as_completed(futures):
+        res = future.result()
+        logging.info(
+            "event=%s, %s, %s",
+            futures[future],
+            res,
+            len(res.text)
+        )
+
+    logging.info('done!')
+
+events = createEventJSON()
+sendAsyncEvents(events)
+
