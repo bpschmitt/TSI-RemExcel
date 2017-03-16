@@ -2,6 +2,7 @@ import csv
 import json
 import logging
 import sys
+import time
 import concurrent.futures as cf
 from requests_futures.sessions import FuturesSession
 
@@ -87,9 +88,15 @@ def sendAsyncEvents(events):
 
     logging.info('start')
 
+    counter=0
     for event in events:
-        future = session.post(parms['url'],data=event,headers=parms['headers'],auth=(parms['email'],parms['apikey']))
-        futures[future] = event
+        while counter < parms['chunksize']:
+            future = session.post(parms['url'],data=event,headers=parms['headers'],auth=(parms['email'],parms['apikey']))
+            futures[future] = event
+            print(event)
+            counter+=1
+        counter=0
+        time.sleep(parms['sleeptime'])
 
     for future in cf.as_completed(futures):
         res = future.result()
