@@ -7,7 +7,7 @@
   "sleeptime": 5,
   "headers": {"Content-type": "application/json"},
   "file": "/path/to/csv/incidentMgmt.csv",
-  "sourcesender": {"ref": "MyApp", "type": "DST_Test", "name": "MyApp"},
+  "sourcesender": {"ref": "MyApp", "type": "MyApp", "name": "MyApp"},
   "fingerprintfields":["@title","incident_id"],
   "status": {"New": 0, "Assigned": 1, "In Progress": 2, "Pending": 3, "Resolved": 4, "Closed": 5, "Cancelled": 6},
   "urgency": {"Critical": 1000, "High": 2000, "Medium": 3000, "Low": 4000},
