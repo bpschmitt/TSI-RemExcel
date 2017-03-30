@@ -1,5 +1,5 @@
 {
-  "app_id": "MyApp",
+  "app_id": "MyApp2",
   "email" : "email@someemail.com",
   "apikey": "<my api key>",
   "url": "https://api.truesight.bmc.com/v1/events",
