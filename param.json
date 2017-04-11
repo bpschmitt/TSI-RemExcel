@@ -5,7 +5,7 @@
   "url": "https://api.truesight.bmc.com/v1/events",
   "chunksize": 500,
   "sleeptime": 5,
-  "timeshift": 94608000,
+  "timeshift": 0,
   "headers": {"Content-type": "application/json"},
   "file": "/path/to/csv/incidentMgmt.csv",
   "file_type": "C",
